@@ -21,7 +21,7 @@ app.use('/users', userRoutes)
 app.use('/books', bookRoutes)
 
 app.use((req, res) => {
-	res.status(404).json({ error: 'Route not found' })
+	res.status(404).json({ error: 'Роут не найден' })
 })
 
 app.use(errorHandler)
@@ -29,9 +29,9 @@ app.use(errorHandler)
 mongoose
 	.connect(process.env.MONGO_URI)
 	.then(() => {
-		console.log('✅ Connected to MongoDB')
+		console.log('Подключен к MongoDB')
 		app.listen(PORT, () =>
-			console.log(`🚀 Server running at http://127.0.0.1:${PORT}`)
+			console.log(`Сервер запущен на http://127.0.0.1:${PORT}`)
 		)
 	})
-	.catch(err => console.error('❌ MongoDB connection error:', err))
+	.catch(err => console.error('Не удалось подключится к MongoDB :', err))
