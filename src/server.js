@@ -1,49 +1,37 @@
-const http = require('http')
-const url = require('url')
-const { readUsers } = require('./modules/readUsers')
+import cors from 'cors'
+import dotenv from 'dotenv'
+import express from 'express'
+import mongoose from 'mongoose'
+import morgan from 'morgan'
 
-const HOST = '127.0.0.1'
-const PORT = process.env.PORT || 3000
+import { errorHandler } from './modules/middleware/errorHandler.js'
+import bookRoutes from './modules/routes/bookRoutes.js'
+import userRoutes from './modules/routes/userRoutes.js'
 
-const server = http.createServer((req, res) => {
-	const parsedUrl = url.parse(req.url, true)
-	const query = parsedUrl.query
+dotenv.config()
 
-	if ('hello' in query) {
-		const name = query.hello
+const app = express()
+const PORT = process.env.PORT || 3005
 
-		if (name) {
-			res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' })
-			res.end(`Hello, ${name}.`)
-		} else {
-			res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' })
-			res.end('Enter a name')
-		}
-	} else if ('users' in query) {
-		readUsers((err, data) => {
-			if (err) {
-				res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' })
-				res.end('Error reading users.json')
-			} else {
-				res.writeHead(200, {
-					'Content-Type': 'application/json; charset=utf-8',
-				})
-				res.end(data)
-			}
-		})
-	} else if (Object.keys(query).length === 0) {
-		res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' })
-		res.end('Hello, World!')
-	} else {
-		res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' })
-		res.end('')
-	}
+app.use(cors())
+app.use(express.json())
+app.use(morgan('dev'))
 
-	console.log(
-		`[${new Date().toISOString()}] ${req.method} ${req.url} → ${res.statusCode}`
-	)
+app.use('/users', userRoutes)
+app.use('/books', bookRoutes)
+
+app.use((req, res) => {
+	res.status(404).json({ error: 'Route not found' })
 })
 
-server.listen(PORT, HOST, () => {
-	console.log(`Сервер запущен на http://${HOST}:${PORT}`)
-})
+app.use(errorHandler)
+
+mongoose
+	.connect(process.env.MONGO_URI)
+	.then(() => {
+		console.log('✅ Connected to MongoDB')
+		app.listen(PORT, () =>
+			console.log(`🚀 Server running at http://127.0.0.1:${PORT}`)
+		)
+	})
+	.catch(err => console.error('❌ MongoDB connection error:', err))
